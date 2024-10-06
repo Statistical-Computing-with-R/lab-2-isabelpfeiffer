@@ -5,6 +5,7 @@ format: html
 editor: source
 embed-resources: true
 code-tools: true
+echo: true
 ---
 
 # Part 1: GitHub Workflow
@@ -62,7 +63,7 @@ In the code chunk below, load in the packages necessary for your analysis. You s
 
 ```{r}
 #| label: setup
-
+library(tidyverse)
 ```
 
 # Data Context
@@ -101,15 +102,27 @@ represent:
 
 ```{r}
 #| label: load-data
+library(here)
+surveys <- read_csv(here("data", "surveys.csv"))
 
 ```
 
 **2. What are the dimensions (# of rows and columns) of these data?**
 
 <!-- You can either write code here or in the code chunk for #1, but I **must** see the code you used to address this question!  -->
+```{r}
+spec(surveys)
+dim(surveys)
+
+```
+
 
 **3. What are the data types of the variables in this dataset?**
-
+```{r}
+class(surveys)
+mode(surveys)
+# https://libraryguides.mcgill.ca/c.php?g=699776&p=4968544#:~:text=Data%20Types%20in%20R,-There%20are%20different&text=These%20data%20types%20can%20be,()%20or%20typeof()%20functions.
+```
 <!-- You can either write code here or in the code chunk for #1, but I **must** see the code you used to address this question!  -->
 
 # Exploratory Data Analysis with **`ggplot2`**
@@ -137,13 +150,21 @@ Let's get started!
 the $x$-axis) and `hindfoot_length` (on the $y$-axis).**
 
 ```{r}
-#| label: scatterplot
-
+#| label: scatterplot1
+ggplot(data = surveys,
+       mapping = aes( x = weight, y = hindfoot_length)) +
+         geom_point()
 ```
 
 We can see there are **a lot** of points plotted on top of each other. Let's try and modify this plot to extract more information from it.
 
 **5. Let's add transparency (`alpha`) to the points, to make the points more transparent and (possibly) easier to see.**
+```{r}
+#| label: scatterplot2
+ggplot(data = surveys,
+       mapping = aes( x = weight, y = hindfoot_length)) +
+         geom_point(alpha = .5)
+```
 
 <!-- Add code to the scatterplot you created for question 4! -->
 
@@ -151,25 +172,53 @@ Despite our best efforts there is still a substantial amount of overplotting occ
 subsets and see if that allows for us to see the trends a bit better.
 
 **6. Facet your scatterplot by `species`.**
-
+```{r}
+#| label: scatterplot3
+ggplot(data = surveys,
+       mapping = aes( x = weight, y = hindfoot_length)) +
+         geom_point(alpha = .5) +
+         facet_wrap(~species)
+```
 <!-- Add code to the scatterplot you created for question 4 (and modified for question 5)! -->
 
 **7. No plot is complete without axis labels and a title. Include reader friendly labels and a title to your plot.**
-
+```{r}
+#| label: scatterplot4
+ggplot(data = surveys,
+       mapping = aes( x = weight, y = hindfoot_length)) +
+         geom_point(alpha = .5) +
+         facet_wrap(~species) +
+  labs(title = "Weight vs. Hindfoot Length by Species")
+```
 <!-- Continue to modify the plot you originally created for question 4! -->
 
 It takes a larger cognitive load to read text that is rotated. It is common practice in many journals and media outlets to move the $y$-axis label to the top of the graph under the title.
 
 **8. Specify your $y$-axis label to be empty and move the $y$-axis label into the subtitle.** 
-
+```{r}
+#| label: scatterplot5
+ggplot(data = surveys,
+       mapping = aes( x = weight, y = hindfoot_length)) +
+         geom_point(alpha = .5) +
+         facet_wrap(~species) +
+  labs(title = "Weight vs. Hindfoot Length by Species",
+       y = "",
+       subtitle = " Hindfoot Length")
+```
 <!-- Continue to modify the plot you originally created for question 4! -->
 
 ## Boxplots
 
 ```{r}
 #| label: boxplot
-
-
+ggplot( data = surveys, 
+		    mapping = aes( x = species, y = weight))+
+        geom_boxplot(outlier.shape = NA) +
+        geom_jitter(width = .1, alpha = 0.1, color = "steelblue")
+        labs(title = "Species vs. Weight",
+        subtitle = " weight")
+        theme(axis.text.x = "species")
+# https://stackoverflow.com/questions/5677885/ignore-outliers-in-ggplot2-boxplot
 ```
 
 **10. Create side-by-side boxplots to visualize the distribution of weight within each species.**
@@ -200,6 +249,7 @@ are two colors of points still being plotted. Some of the observations are being
 
 **14. Inspect the help file for `geom_boxplot()` and see how you can remove the outliers from being plotted by `geom_boxplot()`. Make this change in your code!**
 
+
 <!-- Continue to modify the plot you made for question 10! -->
 
 Some small changes can make **big** differences to plots. One of these changes
@@ -215,6 +265,13 @@ Some people (and journals) prefer for boxplots to be stacked with a specific ori
 
 ```{r}
 #| label: rotated-boxplot
+ggplot( data = surveys, 
+		    mapping = aes(x = weight, y = species))+
+        geom_boxplot(outlier.shape = NA) +
+        geom_jitter(width = .1, alpha = 0.1, color = "steelblue")
+        labs(title = "Species vs. Weight",
+        subtitle = " weight")
+        theme(axis.text.x = "species")
 
 ```
 
@@ -248,13 +305,13 @@ might want to look up the help documentation for `aov()`.
 ```{r}
 #| label: anova
 
-species_mod <- aov()
+species_mod <- aov(weight ~ species, data = surveys)
 
 summary(species_mod)
 ```
 
 **18. Based on the results of the ANOVA F-test, draw a conclusion in context of the hypotheses. Make sure to cite appropriate output from above.**
-
+We reject the null hypothesis. Based off of the small p value of 2e-16, we have evidence to suggest that at least one rodent species has a different population mean weight. 
 
 # Lab 2 Submission
 
